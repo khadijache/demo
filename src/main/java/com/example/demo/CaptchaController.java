@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-
+@CrossOrigin(origins = "*")
 @RestController
-@CrossOrigin(origins = "*") // مهم جداً للسماح لصفحة الويب بالاتصال
+  // مهم جداً للسماح لصفحة الويب بالاتصال
 public class CaptchaController {
 
     private final DefaultKaptcha captchaProducer;
