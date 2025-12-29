@@ -1,13 +1,13 @@
- # المرحلة الأولى: بناء التطبيق باستخدام gradle المثبت جاهزاً
-FROM gradle:8.5-jdk17 AS build
+# المرحلة الأولى: بناء التطبيق باستخدام نسخة Gradle حديثة (9.0)
+FROM gradle:9.0-jdk17 AS build
 WORKDIR /app
 
-# نسخ ملفات الإعداد فقط أولاً لتحسين السرعة
+# نسخ ملفات الإعداد
 COPY build.gradle settings.gradle ./
 # نسخ الكود المصدري
 COPY src ./src
 
-# البناء باستخدام أمر gradle المباشر (بدون ./gradlew)
+# البناء
 RUN gradle bootJar --no-daemon && rm -f build/libs/*-plain.jar
 
 # المرحلة الثانية: التشغيل
