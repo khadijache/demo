@@ -1,4 +1,3 @@
-
 package com.example.demo;
 
 import com.google.code.kaptcha.impl.DefaultKaptcha;
@@ -10,20 +9,17 @@ import java.util.Properties;
 
 @Configuration
 public class KaptchaConfig {
-
     @Bean
-    public DefaultKaptcha captchaProducer() {
-        DefaultKaptcha kaptcha = new DefaultKaptcha();
+    public DefaultKaptcha defaultKaptcha() {
+        DefaultKaptcha defaultKaptcha = new DefaultKaptcha();
         Properties properties = new Properties();
+        // إعدادات الرموز: طول الكابتشا 4 حروف، واللون أزرق مثلاً
+        properties.setProperty("kaptcha.textproducer.char.length", "4");
+        properties.setProperty("kaptcha.border", "no");
+        properties.setProperty("kaptcha.textproducer.font.color", "blue");
 
-        // إعدادات المظهر
-        properties.put("kaptcha.border", "no");
-        properties.put("kaptcha.textproducer.char.length", "5");
-        properties.put("kaptcha.textproducer.font.color", "black");
-        properties.put("kaptcha.image.width", "200");
-        properties.put("kaptcha.image.height", "50");
-
-        kaptcha.setConfig(new Config(properties));
-        return kaptcha;
+        Config config = new Config(properties);
+        defaultKaptcha.setConfig(config);
+        return defaultKaptcha;
     }
 }

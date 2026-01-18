@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>نظام التحقق بالكابتشا</title>
+    <style>
+        .captcha-container { margin: 20px; padding: 20px; border: 1px solid #ccc; width: 300px; }
+        #captchaImage { display: block; margin-bottom: 10px; cursor: pointer; border: 1px solid #000; min-height: 50px; }
+        .refresh-text { font-size: 12px; color: blue; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="captcha-container">
+    <h3>التحقق البشري</h3>
+
+    <img id="captchaImage" src="" alt="جاري التحميل..." onclick="loadCaptcha()">
+    <span class="refresh-text" onclick="loadCaptcha()">تحديث الرمز</span>
+
+    <br>
+    <input type="text" id="captchaInput" placeholder="أدخل الرموز الظاهرة">
+    <button onclick="verifyCaptcha()">تحقق</button>
+
+    <p id="resultMessage"></p>
+</div>
+
+<script>
+    let currentCaptchaId = "";
+    // استبدل هذا الرابط برابط السيرفر الخاص بك على Render
+    const API_BASE_URL = "https://your-app-name.onrender.com";
+
+    // 1. وظيفة تحميل كابتشا جديدة
+    async function loadCaptcha() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/captcha/new`);
+            const data = await response.json();
+
+            currentCaptchaId = data.captchaId;
+            // تحديث مصدر الصورة ليطلب الـ byte array من السيرفر
+            document.getElementById('captchaImage').src = `${API_BASE_URL}${data.imageUrl}`;
+            document.getElementById('captchaInput').value = "";
+            document.getElementById('resultMessage').innerText = "";
+        } catch (error) {
+            console.error("خطأ في تحميل الكابتشا:", error);
+        }
+    }
+
+    // 2. وظيفة التحقق من الإجابة
+    async function verifyCaptcha() {
+        const answer = document.getElementById('captchaInput').value;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/captcha/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: currentCaptchaId, answer: answer })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                document.getElementById('resultMessage').innerText = "✅ تم التحقق بنجاح!";
+                document.getElementById('resultMessage').style.color = "green";
+            } else {
+                document.getElementById('resultMessage').innerText = "❌ الرمز خاطئ، حاول ثانية.";
+                document.getElementById('resultMessage').style.color = "red";
+                loadCaptcha(); // إعادة تحميل كابتشا جديدة عند الخطأ
+            }
+        } catch (error) {
+            console.error("خطأ في التحقق:", error);
+        }
+    }
+
+    // تحميل أول كابتشا عند فتح الصفحة
+    window.onload = loadCaptcha;
+</script>
+
+</body>
+</html>
