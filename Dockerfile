@@ -1,15 +1,24 @@
-# 1. مرحلة البناء (تأكد من وجود هذه الأسطر)
+# المرحلة الأولى: بناء التطبيق
 FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
-COPY . .
+
+# نسخ الملفات اللازمة للبناء
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle .
+COPY settings.gradle .
+COPY src src
+
+# إعطاء صلاحية التنفيذ وبناء التطبيق
 RUN chmod +x gradlew
 RUN ./gradlew bootJar --no-daemon
 
-# 2. مرحلة التشغيل (هنا التعديل الذي قمت به)
-FROM openjdk:17-jdk-slim
+# المرحلة الثانية: التشغيل (استخدام Eclipse Temurin بدلاً من OpenJDK المحذوف)
+FROM eclipse-temurin:17-jre-slim
 WORKDIR /app
-# السطر التالي هو الأهم، بدونه لن يجد Docker ملف الـ jar
+
+# نسخ ملف الـ jar الناتج من مرحلة البناء
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# السطر الذي قمت بتعديله أنت (وضعه صحيح هنا)
+# إعدادات التشغيل النهائية مع وضع headless
 ENTRYPOINT ["java", "-Djava.awt.headless=true", "-jar", "app.jar"]
