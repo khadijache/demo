@@ -1,5 +1,5 @@
-# المرحلة الأولى: بناء التطبيق باستخدام نسخة Gradle متوافقة (8.10)
-FROM gradle:8.10-jdk17 AS build
+# المرحلة الأولى: بناء التطبيق باستخدام النسخة المطلوبة بدقة (8.14)
+FROM gradle:8.14-jdk17 AS build
 WORKDIR /app
 
 # نسخ ملفات المشروع
@@ -15,5 +15,5 @@ WORKDIR /app
 # نسخ ملف الـ jar الناتج
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# إعدادات التشغيل بوضع headless لحل مشكلة السيرفر الأصلية
+# إعدادات التشغيل بوضع headless
 ENTRYPOINT ["java", "-Djava.awt.headless=true", "-jar", "app.jar"]
