@@ -7,38 +7,31 @@ import org.springframework.web.bind.annotation.*;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+
 @CrossOrigin(origins = "*")
 @RestController
-  // مهم جداً للسماح لصفحة الويب بالاتصال
 public class CaptchaController {
 
     private final DefaultKaptcha captchaProducer;
-    // مخزن مؤقت لحفظ الرموز (في المشاريع الكبيرة نستخدم Redis)
+    // مخزن في الذاكرة لحفظ الرموز والتحقق منها
     private static final Map<String, String> cache = new ConcurrentHashMap<>();
 
     public CaptchaController(DefaultKaptcha captchaProducer) {
         this.captchaProducer = captchaProducer;
     }
 
-    // 1. إنشاء كابتشا جديدة
+    // 1. إنشاء كابتشا جديدة (توليد الرموز فقط)
     @GetMapping("/captcha/new")
-    public Map<String, String> newCaptcha() throws Exception {
+    public Map<String, String> newCaptcha() {
         String text = captchaProducer.createText();
-        BufferedImage image = captchaProducer.createImage(text);
         String id = UUID.randomUUID().toString();
 
+        // حفظ النص المرتبط بالمعرف في الذاكرة
         cache.put(id, text);
-
-        // حفظ الصورة مؤقتاً في مجلد النظام
-        File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        ImageIO.write(image, "png", new File(tempDir, id + ".png"));
 
         Map<String, String> response = new HashMap<>();
         response.put("captchaId", id);
@@ -46,11 +39,22 @@ public class CaptchaController {
         return response;
     }
 
-    // 2. عرض الصورة للمتصفح
+    // 2. تحويل الرموز إلى صورة وبثها مباشرة (بدون حفظ ملفات)
     @GetMapping(value = "/captcha/image/{id}", produces = MediaType.IMAGE_PNG_VALUE)
     public byte[] getImage(@PathVariable String id) throws Exception {
-        File tempFile = new File(System.getProperty("java.io.tmpdir"), id + ".png");
-        return Files.readAllBytes(tempFile.toPath());
+        String text = cache.get(id);
+        if (text == null) {
+            throw new RuntimeException("الرمز منتهي الصلاحية أو غير موجود");
+        }
+
+        // رسم الحروف والرموز في صورة داخل الذاكرة
+        BufferedImage image = captchaProducer.createImage(text);
+
+        // تحويل الصورة إلى مصفوفة بايتات للبث عبر الإنترنت
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", baos);
+
+        return baos.toByteArray();
     }
 
     // 3. التحقق من إجابة المستخدم
@@ -60,7 +64,7 @@ public class CaptchaController {
         String answer = data.get("answer");
 
         boolean ok = cache.containsKey(id) && cache.get(id).equalsIgnoreCase(answer);
-        if (ok) cache.remove(id); // حذفها بعد النجاح لمنع إعادة الاستخدام
+        if (ok) cache.remove(id); // حذف الرمز بعد النجاح للأمان
 
         Map<String, Boolean> response = new HashMap<>();
         response.put("success", ok);
