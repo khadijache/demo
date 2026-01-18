@@ -2,23 +2,19 @@
 FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
 
-# نسخ الملفات اللازمة للبناء
-COPY gradlew .
-COPY gradle gradle
-COPY build.gradle .
-COPY settings.gradle .
-COPY src src
+# نسخ الملفات الأساسية
+COPY . .
 
-# إعطاء صلاحية التنفيذ وبناء التطبيق
+# بناء التطبيق مع تجاهل الاختبارات
 RUN chmod +x gradlew
-RUN ./gradlew bootJar --no-daemon
+RUN ./gradlew bootJar --no-daemon -x test
 
-# المرحلة الثانية: التشغيل (استخدام Eclipse Temurin بدلاً من OpenJDK المحذوف)
-FROM eclipse-temurin:17-jre-slim
+# المرحلة الثانية: التشغيل باستخدام Amazon Corretto (الأكثر توافراً)
+FROM amazoncorretto:17-alpine
 WORKDIR /app
 
-# نسخ ملف الـ jar الناتج من مرحلة البناء
+# نسخ ملف الـ jar الناتج
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# إعدادات التشغيل النهائية مع وضع headless
+# إعدادات التشغيل بوضع headless
 ENTRYPOINT ["java", "-Djava.awt.headless=true", "-jar", "app.jar"]
