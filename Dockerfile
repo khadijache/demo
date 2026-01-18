@@ -1,21 +1,18 @@
-# المرحلة الأولى: بناء التطبيق
+# المرحلة الأولى: بناء التطبيق باستخدام محرك Gradle المثبت في الصورة
 FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
 
-# نسخ كل الملفات الموجودة في المستودع إلى الحاوية
+# نسخ ملفات المشروع (سيتم نسخ build.gradle و src وغيرها)
 COPY . .
 
-# إعطاء صلاحية التشغيل للملف (تأكد أن الاسم gradlew وليس Gradlew)
-RUN chmod +x gradlew
-
-# بناء التطبيق باستخدام الـ wrapper
-RUN ./gradlew bootJar --no-daemon -x test
+# استخدام أمر gradle المباشر (هذا الأمر لا يحتاج لمجلد gradle/wrapper)
+RUN gradle bootJar --no-daemon -x test
 
 # المرحلة الثانية: التشغيل
 FROM amazoncorretto:17-alpine
 WORKDIR /app
 
-# نسخ ملف الـ jar الناتج من مجلد build/libs
+# نسخ ملف الـ jar الناتج من المسار الافتراضي لـ Gradle
 COPY --from=build /app/build/libs/*.jar app.jar
 
 # إعدادات التشغيل بوضع headless
