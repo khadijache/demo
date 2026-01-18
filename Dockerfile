@@ -2,23 +2,21 @@
 FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
 
-# نسخ كل محتويات مجلد demo إلى بيئة البناء
-# إذا كان الـ Dockerfile خارج مجلد demo، نستخدم:
-COPY demo/ .
+# نسخ كل الملفات الموجودة في المستودع إلى الحاوية
+COPY . .
 
-# إذا كان الـ Dockerfile داخل مجلد demo، نستخدم:
-# COPY . .
-
-# إعطاء صلاحية وبناء التطبيق
+# إعطاء صلاحية التشغيل للملف (تأكد أن الاسم gradlew وليس Gradlew)
 RUN chmod +x gradlew
+
+# بناء التطبيق باستخدام الـ wrapper
 RUN ./gradlew bootJar --no-daemon -x test
 
 # المرحلة الثانية: التشغيل
 FROM amazoncorretto:17-alpine
 WORKDIR /app
 
-# نسخ ملف الـ jar الناتج (لاحظ المسار)
+# نسخ ملف الـ jar الناتج من مجلد build/libs
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# إعدادات التشغيل
+# إعدادات التشغيل بوضع headless
 ENTRYPOINT ["java", "-Djava.awt.headless=true", "-jar", "app.jar"]
