@@ -1,15 +1,15 @@
-# المرحلة الأولى: البناء
+# 1. مرحلة البناء (تأكد من وجود هذه الأسطر)
 FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
 COPY . .
-# السطر الجديد المهم جداً لحل مشكلة Permission denied
 RUN chmod +x gradlew
-RUN ./gradlew bootJar --no-daemon && rm -f build/libs/*-plain.jar
+RUN ./gradlew bootJar --no-daemon
 
-# المرحلة الثانية: التشغيل (تأكدي أن السطر 7 أصبح هكذا)
-FROM amazoncorretto:17-alpine
+# 2. مرحلة التشغيل (هنا التعديل الذي قمت به)
+FROM openjdk:17-jdk-slim
 WORKDIR /app
+# السطر التالي هو الأهم، بدونه لن يجد Docker ملف الـ jar
 COPY --from=build /app/build/libs/*.jar app.jar
-EXPOSE 8080
-# احذف السطر القديم واكتب هذا مكانه
+
+# السطر الذي قمت بتعديله أنت (وضعه صحيح هنا)
 ENTRYPOINT ["java", "-Djava.awt.headless=true", "-jar", "app.jar"]
